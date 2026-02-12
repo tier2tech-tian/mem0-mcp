@@ -94,7 +94,8 @@ BLOCK
 fi
 
 echo ""
-echo -e "${GREEN}Setup complete!${NC} Restart Claude Code to activate."
+echo -e "${GREEN}安装完成！${NC}重启 Claude Code 即可生效。"
 echo ""
-echo "Your User ID: ${YELLOW}$MEM0_USER_ID${NC}"
-echo "To change User ID, edit MEM0_USER_ID in ~/.claude.json → mcpServers → mem0 → env"
+echo "当前 User ID: ${YELLOW}$MEM0_USER_ID${NC}"
+echo "如需修改，编辑 ~/.claude.json 中 mcpServers → mem0 → env → MEM0_USER_ID"
+echo "也可以进入 Claude Code 让 agent 帮你修改"
