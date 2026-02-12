@@ -24,17 +24,20 @@ if ! command -v claude &> /dev/null; then
 fi
 
 # Collect config
-MEM0_USER_ID="$(whoami)"
+DEFAULT_USER_ID="$(hostname -s | tr '[:upper:]' '[:lower:]')"
 
 read -p "mem0 API URL (e.g. https://mem0.example.com): " MEM0_API_URL
+read -p "User ID [$DEFAULT_USER_ID]: " MEM0_USER_ID
 read -p "API Key (leave empty if not required): " MEM0_API_KEY
+
+MEM0_USER_ID="${MEM0_USER_ID:-$DEFAULT_USER_ID}"
 
 if [ -z "$MEM0_API_URL" ]; then
   echo "Error: API URL is required."
   exit 1
 fi
 
-echo "User ID: $MEM0_USER_ID (from system username)"
+echo "User ID: $MEM0_USER_ID"
 
 # Install
 echo ""
