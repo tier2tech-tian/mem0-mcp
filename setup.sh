@@ -24,20 +24,15 @@ if ! command -v claude &> /dev/null; then
 fi
 
 # Collect config
-DEFAULT_USER_ID="$(hostname -s | tr '[:upper:]' '[:lower:]')"
+MEM0_USER_ID="$(hostname -s | tr '[:upper:]' '[:lower:]')"
 
 read -p "mem0 API URL (e.g. https://mem0.example.com): " MEM0_API_URL
-read -p "User ID [$DEFAULT_USER_ID]: " MEM0_USER_ID
 read -p "API Key (leave empty if not required): " MEM0_API_KEY
-
-MEM0_USER_ID="${MEM0_USER_ID:-$DEFAULT_USER_ID}"
 
 if [ -z "$MEM0_API_URL" ]; then
   echo "Error: API URL is required."
   exit 1
 fi
-
-echo "User ID: $MEM0_USER_ID"
 
 # Install
 echo ""
@@ -100,3 +95,6 @@ fi
 
 echo ""
 echo -e "${GREEN}Setup complete!${NC} Restart Claude Code to activate."
+echo ""
+echo "Your User ID: ${YELLOW}$MEM0_USER_ID${NC}"
+echo "To change User ID, edit MEM0_USER_ID in ~/.claude.json → mcpServers → mem0 → env"
