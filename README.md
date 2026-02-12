@@ -29,6 +29,9 @@ bash setup.sh
 1. 安装依赖到 `~/.mem0-mcp/`
 2. 交互式输入 mem0 URL、User ID、API Key
 3. 自动注册到 Claude Code
+4. 自动配置全局 `~/.claude/CLAUDE.md`，让 Claude 在所有项目中自动使用 mem0
+
+重启 Claude Code 即可生效。
 
 ## 手动安装
 
@@ -47,17 +50,7 @@ claude mcp add -s user mem0 \
   -- node ~/.mem0-mcp/index.mjs
 ```
 
-## 配置 MEMORY.md
-
-将 `MEMORY.template.md` 复制到项目的 memory 目录，让 Claude 自动使用 mem0：
-
-```bash
-# 找到项目的 memory 目录（路径中的项目名会被编码）
-mkdir -p ~/.claude/projects/<your-project>/memory
-cp MEMORY.template.md ~/.claude/projects/<your-project>/memory/MEMORY.md
-```
-
-根据项目需要编辑 MEMORY.md，添加搜索关键词索引。
+手动安装时需自行将 mem0 指引追加到 `~/.claude/CLAUDE.md`，参考 `setup.sh` 中的内容。
 
 ## 环境变量
 

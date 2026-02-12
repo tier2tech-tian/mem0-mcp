@@ -2,6 +2,7 @@
 set -e
 
 INSTALL_DIR="$HOME/.mem0-mcp"
+CLAUDE_MD="$HOME/.claude/CLAUDE.md"
 
 # Colors
 GREEN='\033[0;32m'
@@ -57,12 +58,39 @@ fi
 
 eval claude mcp add -s user mem0 $ENV_ARGS -- node "$INSTALL_DIR/index.mjs"
 
+# Setup global CLAUDE.md
 echo ""
-echo -e "${GREEN}Done!${NC} MCP server registered."
+MEM0_MARKER="## Mem0 Memory System"
+
+if [ -f "$CLAUDE_MD" ] && grep -q "$MEM0_MARKER" "$CLAUDE_MD"; then
+  echo -e "${YELLOW}Global CLAUDE.md already has mem0 config, skipping.${NC}"
+else
+  echo "Adding mem0 instructions to global CLAUDE.md ..."
+  mkdir -p "$(dirname "$CLAUDE_MD")"
+  cat >> "$CLAUDE_MD" << 'BLOCK'
+
+## Mem0 Memory System
+
+All project knowledge is stored in **mem0**. Search mem0 for context at the start of each session or when encountering relevant topics.
+
+### Auto-save triggers
+- User expresses a preference (e.g., "always use bun", "don't auto-commit")
+- A tricky bug is discovered and resolved — record the cause and solution
+- Important architectural decisions or conventions are learned
+- User corrects a wrong approach
+
+### Auto-search triggers
+- Session start — search for memories related to the current project/task
+- Encountering a problem that may have been handled before
+- User mentions a topic that may have related history
+
+### Guidelines
+- Keep memories concise, specific, and actionable
+- Do not save temporary or one-off information
+- Use short keywords (2-5 words) for search queries, not full sentences
+BLOCK
+  echo -e "${GREEN}Global CLAUDE.md updated.${NC}"
+fi
+
 echo ""
-echo "Next steps:"
-echo "  1. Copy MEMORY.template.md to your project's memory directory:"
-echo "     mkdir -p ~/.claude/projects/<your-project>/memory"
-echo "     cp MEMORY.template.md ~/.claude/projects/<your-project>/memory/MEMORY.md"
-echo "  2. Restart Claude Code"
-echo "  3. Claude will now auto-search mem0 for context"
+echo -e "${GREEN}Setup complete!${NC} Restart Claude Code to activate."
