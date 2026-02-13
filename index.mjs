@@ -34,12 +34,13 @@ server.tool(
   "Save a memory to mem0. Use this to remember important facts, preferences, decisions, or context.",
   {
     content: z.string().describe("The text content to remember"),
-    user_id: z.string().optional().describe("User ID"),
+    user_id: z.string().optional().describe("User ID (uses MEM0_USER_ID env var)"),
     agent_id: z.string().optional().describe("Agent ID (default: claude-code)"),
     metadata: z.record(z.any()).optional().describe("Optional metadata"),
   },
   async ({ content, user_id, agent_id, metadata }) => {
-    const result = await api("/memories", {
+    // Fire-and-forget: return immediately, write in background
+    api("/memories", {
       method: "POST",
       body: JSON.stringify({
         messages: [{ role: "user", content }],
@@ -47,8 +48,10 @@ server.tool(
         agent_id: agent_id || DEFAULT_AGENT_ID,
         metadata,
       }),
+    }).catch((err) => {
+      process.stderr.write(`[mem0] async add_memory failed: ${err.message}\n`);
     });
-    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    return { content: [{ type: "text", text: JSON.stringify({ status: "queued", message: "Memory is being saved in the background." }) }] };
   }
 );
 
@@ -58,7 +61,7 @@ server.tool(
   "Search mem0 for relevant memories. Use this to recall previous context, preferences, or decisions.",
   {
     query: z.string().describe("Search query"),
-    user_id: z.string().optional().describe("User ID"),
+    user_id: z.string().optional().describe("User ID (uses MEM0_USER_ID env var)"),
     agent_id: z.string().optional().describe("Agent ID - omit to search all agents under the user"),
     limit: z.number().optional().describe("Max number of results (default: 10)"),
     threshold: z.number().optional().describe("Max cosine distance to include (lower=more relevant, e.g. 0.6). Results above this score are filtered out."),
@@ -86,7 +89,7 @@ server.tool(
   "get_memories",
   "Retrieve all stored memories for a user.",
   {
-    user_id: z.string().optional().describe("User ID"),
+    user_id: z.string().optional().describe("User ID (uses MEM0_USER_ID env var)"),
     agent_id: z.string().optional().describe("Agent ID - omit to get all agents' memories"),
     limit: z.number().optional().describe("Max number of results (default: 10)"),
   },
