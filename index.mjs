@@ -1,13 +1,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { hostname } from "node:os";
+import { hostname, cpus } from "node:os";
 
 const MEM0_API = process.env.MEM0_API_URL || "http://localhost:29476";
 const DEFAULT_USER_ID = process.env.MEM0_USER_ID || "heasenbug";
 const DEFAULT_AGENT_ID = process.env.MEM0_AGENT_ID || "claude-code";
 const MEM0_API_KEY = process.env.MEM0_API_KEY || "";
 const MACHINE_NAME = process.env.MEM0_MACHINE_NAME || hostname();
+const CPU_MODEL = cpus()[0]?.model || "unknown";
 
 async function api(path, options = {}) {
   const headers = { "Content-Type": "application/json" };
@@ -42,7 +43,7 @@ server.tool(
   },
   async ({ content, user_id, agent_id, metadata }) => {
     // 自动注入 source（机器名），调用方显式传入的 source 优先
-    const mergedMetadata = { source: MACHINE_NAME, ...metadata };
+    const mergedMetadata = { source: MACHINE_NAME, cpuModel: CPU_MODEL, ...metadata };
     // Fire-and-forget: return immediately, write in background
     api("/memories", {
       method: "POST",
