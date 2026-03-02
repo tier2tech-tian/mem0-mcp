@@ -12,11 +12,15 @@ Claude Code 的持久化记忆系统。通过 [mem0](https://github.com/mem0ai/m
 | `update_memory` | 修改指定记忆内容 |
 | `delete_memory` | 删除指定记忆 |
 
+## 服务地址
+
+默认 mem0 服务运行在 `10.150.204.118:29476`（内网固定 IP）。
+
 ## 前置条件
 
 - Node.js >= 18
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
-- 可访问的 mem0 服务（自建或云端）
+- 可访问的 mem0 服务（默认地址见上方）
 
 ## 安装
 
