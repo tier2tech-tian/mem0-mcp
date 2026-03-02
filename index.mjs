@@ -1,7 +1,22 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { hostname, cpus } from "node:os";
+import { hostname, cpus, homedir } from "node:os";
+import { appendFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+
+const LOG_DIR = join(homedir(), "mem0-local", "logs");
+const LOG_FILE = join(LOG_DIR, "mcp.log");
+try { mkdirSync(LOG_DIR, { recursive: true }); } catch {}
+
+function log(level, msg, extra) {
+  const ts = new Date().toISOString();
+  const line = extra
+    ? `${ts} [${level}] ${msg} ${JSON.stringify(extra)}\n`
+    : `${ts} [${level}] ${msg}\n`;
+  try { appendFileSync(LOG_FILE, line); } catch {}
+  if (level === "ERROR") process.stderr.write(`[mem0] ${msg}\n`);
+}
 
 const MEM0_API = process.env.MEM0_API_URL || "http://localhost:29476";
 const DEFAULT_USER_ID = process.env.MEM0_USER_ID || "heasenbug";
@@ -45,16 +60,22 @@ server.tool(
     // 自动注入 source（机器名），调用方显式传入的 source 优先
     const mergedMetadata = { source: MACHINE_NAME, cpuModel: CPU_MODEL, ...metadata };
     // Fire-and-forget: return immediately, write in background
+    const uid = user_id || DEFAULT_USER_ID;
+    const aid = agent_id || DEFAULT_AGENT_ID;
+    const preview = content.length > 80 ? content.slice(0, 80) + "..." : content;
     api("/memories", {
       method: "POST",
       body: JSON.stringify({
         messages: [{ role: "user", content }],
-        user_id: user_id || DEFAULT_USER_ID,
-        agent_id: agent_id || DEFAULT_AGENT_ID,
+        user_id: uid,
+        agent_id: aid,
         metadata: mergedMetadata,
       }),
+    }).then((res) => {
+      const count = res?.results?.length ?? 0;
+      log("INFO", `add_memory OK: ${count} facts extracted`, { user_id: uid, agent_id: aid, preview });
     }).catch((err) => {
-      process.stderr.write(`[mem0] async add_memory failed: ${err.message}\n`);
+      log("ERROR", `add_memory FAILED: ${err.message}`, { user_id: uid, agent_id: aid, preview });
     });
     return { content: [{ type: "text", text: JSON.stringify({ status: "queued", message: "Memory is being saved in the background." }) }] };
   }
@@ -80,10 +101,16 @@ server.tool(
     };
     if (agent_id) body.agent_id = agent_id;
     if (filters) body.filters = filters;
-    const result = await api("/search", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+    let result;
+    try {
+      result = await api("/search", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      log("ERROR", `search_memories FAILED: ${err.message}`, { query, user_id: body.user_id });
+      throw err;
+    }
     if (threshold != null && result.results) {
       result.results = result.results.filter(r => r.score <= threshold);
     }
@@ -109,6 +136,30 @@ server.tool(
   }
 );
 
+// Update a memory
+server.tool(
+  "update_memory",
+  "Update the text content of an existing memory by its ID.",
+  {
+    memory_id: z.string().describe("The memory ID to update"),
+    content: z.string().describe("The new text content for this memory"),
+  },
+  async ({ memory_id, content }) => {
+    let result;
+    try {
+      result = await api(`/memories/${encodeURIComponent(memory_id)}`, {
+        method: "PUT",
+        body: JSON.stringify({ data: content }),
+      });
+    } catch (err) {
+      log("ERROR", `update_memory FAILED: ${err.message}`, { memory_id, preview: content.slice(0, 80) });
+      throw err;
+    }
+    log("INFO", `update_memory OK`, { memory_id, preview: content.slice(0, 80) });
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
 // Delete a memory
 server.tool(
   "delete_memory",
@@ -117,9 +168,15 @@ server.tool(
     memory_id: z.string().describe("The memory ID to delete"),
   },
   async ({ memory_id }) => {
-    const result = await api(`/memories/${encodeURIComponent(memory_id)}`, {
-      method: "DELETE",
-    });
+    let result;
+    try {
+      result = await api(`/memories/${encodeURIComponent(memory_id)}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      log("ERROR", `delete_memory FAILED: ${err.message}`, { memory_id });
+      throw err;
+    }
     return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
   }
 );
