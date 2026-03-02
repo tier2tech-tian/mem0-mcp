@@ -19,7 +19,7 @@ function log(level, msg, extra) {
 }
 
 const MEM0_API = process.env.MEM0_API_URL || "http://localhost:29476";
-const DEFAULT_USER_ID = process.env.MEM0_USER_ID || "heasenbug";
+const DEFAULT_USER_ID = process.env.MEM0_USER_ID || "default";
 const DEFAULT_AGENT_ID = process.env.MEM0_AGENT_ID || "claude-code";
 const MEM0_API_KEY = process.env.MEM0_API_KEY || "";
 const MACHINE_NAME = process.env.MEM0_MACHINE_NAME || hostname();
@@ -52,7 +52,7 @@ server.tool(
   "Save a memory to mem0. Use this to remember important facts, preferences, decisions, or context.",
   {
     content: z.string().describe("The text content to remember"),
-    user_id: z.string().optional().describe("User ID (default: heasenbug)"),
+    user_id: z.string().optional().describe("User ID (default: env MEM0_USER_ID)"),
     agent_id: z.string().optional().describe("Agent ID (default: claude-code)"),
     metadata: z.record(z.any()).optional().describe("Optional metadata"),
   },
@@ -87,7 +87,7 @@ server.tool(
   "Search mem0 for relevant memories. Use this to recall previous context, preferences, or decisions.",
   {
     query: z.string().describe("Search query"),
-    user_id: z.string().optional().describe("User ID (default: heasenbug)"),
+    user_id: z.string().optional().describe("User ID (default: env MEM0_USER_ID)"),
     agent_id: z.string().optional().describe("Agent ID - omit to search all agents under the user"),
     limit: z.number().optional().describe("Max number of results (default: 10)"),
     threshold: z.number().optional().describe("Max cosine distance to include (lower=more relevant, e.g. 0.6). Results above this score are filtered out."),
@@ -123,7 +123,7 @@ server.tool(
   "get_memories",
   "Retrieve all stored memories for a user.",
   {
-    user_id: z.string().optional().describe("User ID (default: heasenbug)"),
+    user_id: z.string().optional().describe("User ID (default: env MEM0_USER_ID)"),
     agent_id: z.string().optional().describe("Agent ID - omit to get all agents' memories"),
     limit: z.number().optional().describe("Max number of results (default: 10)"),
   },
